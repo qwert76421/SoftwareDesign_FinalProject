@@ -1,0 +1,39 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+package "actors/mobs" {
+  class Mob {
+    +spriteClass : Class<? extends CharSprite>
+    +sprite() : CharSprite
+  }
+
+  class MobSpriteRegistry {
+    -REGISTRY : Map<Class<? extends Mob>, Class<? extends CharSprite>>
+    +register(mobClass, spriteClass) : void
+    +spriteClassFor(mobClass) : Class<? extends CharSprite>
+  }
+}
+
+package "sprites" {
+  class CharSprite
+}
+
+' 依賴/關聯關係
+Mob ..> MobSpriteRegistry : fallback lookup\n(if spriteClass == null)
+Mob ..> CharSprite : creates via Reflection\nnewInstance(spriteClass)
+MobSpriteRegistry ..> CharSprite : stores mapping\nMob -> CharSprite
+
+note right of MobSpriteRegistry
+Fail-fast:
+If mapping missing,
+throw IllegalStateException
+with clear message.
+end note
+
+note left of Mob
+Behavior:
+1) if spriteClass != null -> use it
+2) else -> MobSpriteRegistry.spriteClassFor(getClass())
+3) Reflection.newInstance(sc)
+end note
+@enduml
